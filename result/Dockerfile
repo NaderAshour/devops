@@ -11,6 +11,6 @@ COPY --from=build /app /app
 RUN chown -R resultuser:resultgroup /app
 USER resultuser
 COPY  package*.json .
-EXPOSE 4000
+EXPOSE 81
 CMD [ "node","server.js" ]
 

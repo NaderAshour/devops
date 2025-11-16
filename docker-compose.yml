@@ -14,10 +14,14 @@ services:
       start_period: 10s
   db:
     image: postgres:15-alpine
+    secrets:
+      - postgres_user
+      - postgres_password
+      - postgres_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-     # POSTGRES_DB: votes
+      POSTGRES_USER_FILE: /run/secrets/postgres_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB_FILE: /run/secrets/postgres_db
     networks:
       - backend
     volumes:
@@ -66,7 +70,7 @@ services:
       context: ./result
       dockerfile: Dockerfile
     ports:
-      - "8081:4000"
+      - "8081:81"
     networks:
       - frontend
       - backend
@@ -93,4 +97,12 @@ networks:
   backend:
 volumes:
   postgres-data:
+secrets:
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  postgres_db:
+    file: ./secrets/postgres_db.txt
+
     

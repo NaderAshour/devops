@@ -15,4 +15,4 @@ RUN chown -R voteuser:votegroup /app
 USER voteuser
 ENV PORT=80
 EXPOSE 80
-CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--workers", "2", "-k", "gevent", "--timeout", "120"]
+CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--workers", "2"]
