@@ -1,0 +1,17 @@
+name: dev-app-ingress
+namespace: dev
+
+#host: dev.tactfulapp.com
+
+#tls:
+#  secretName: dev-tls-secret
+#  clusterIssuer: letsencrypt-staging
+
+services:
+  vote:
+    name: vote
+    port: 8080
+
+  result:
+    name: result
+    port: 8081

@@ -1,0 +1,6 @@
+global:
+  security:
+    allowInsecureImages: true
+redis:
+  existingSecret: app-secrets
+  enabled: true

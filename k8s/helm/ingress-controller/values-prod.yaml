@@ -1,0 +1,7 @@
+controller:
+  service:
+    annotations:
+    # this RG must be changed incaseof terraform applied prod environment
+      service.beta.kubernetes.io/azure-load-balancer-resource-group: tfstate-rg  
+  metrics:
+    enabled: true

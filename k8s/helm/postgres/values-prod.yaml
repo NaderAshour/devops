@@ -1,0 +1,6 @@
+global:
+  security:
+    allowInsecureImages: true
+postgresql:
+  existingSecret: app-secrets
+  enabled: true

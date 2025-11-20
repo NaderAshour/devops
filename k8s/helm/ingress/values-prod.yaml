@@ -1,0 +1,17 @@
+name: prod-app-ingress
+namespace: prod
+
+#host: app.tactfulapp.com
+
+#tls:
+#  secretName: prod-tls-secret
+#  clusterIssuer: letsencrypt-prod
+
+services:
+  vote:
+    name: vote
+    port: 8080
+
+  result:
+    name: result
+    port: 8081

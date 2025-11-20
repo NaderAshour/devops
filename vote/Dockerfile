@@ -13,6 +13,6 @@ RUN pip install --no-cache-dir --no-index -r requirements.txt -f /wheels && rm -
 COPY . /app 
 RUN chown -R voteuser:votegroup /app
 USER voteuser
-ENV PORT=80
-EXPOSE 80
-CMD ["gunicorn", "app:app", "-b", "0.0.0.0:80", "--workers", "2"]
+ENV PORT=8080
+EXPOSE 8080
+CMD ["gunicorn", "app:app", "-b", "0.0.0.0:8080", "--workers", "2"]

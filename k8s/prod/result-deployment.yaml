@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: result
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: result
+  template:
+    metadata:
+      labels:
+        app: result
+    spec:
+      containers:
+        - name: result
+          image: tactfulacr.azurecr.io/devops-result:latest
+          ports:
+            - containerPort: 81
+          envFrom:
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
+          volumeMounts:
+            - name: kv-secrets
+              mountPath: /mnt/secrets-store
+              readOnly: true
+      volumes:
+        - name: kv-secrets
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "kv-dev-spc"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: result
+  namespace: dev
+spec:
+  type: ClusterIP
+  selector:
+    app: result
+  ports:
+    - port: 81
+      targetPort: 81

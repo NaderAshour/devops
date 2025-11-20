@@ -1,0 +1,18 @@
+statefulset.apps/postgres-dev-postgresql   1/1     8h
+statefulset.apps/redis-dev-master          1/1     8h
+statefulset.apps/redis-dev-replicas        2/3     8h
+
+
+kubectl scale statefulset postgres-dev-postgresql redis-dev-master redis-dev-replicas --replicas=0 -n dev
+kubectl scale statefulset postgres-dev-postgresql redis-dev-master redis-dev-replicas --replicas=1 -n dev
+
+
+helm upgrade --install dev-app-ingress . -f values-dev.yaml -n dev
+helm upgrade --install prod-app-ingress . -f values-prod.yaml -n prod
+
+
+
+az role assignment list --assignee c74d1305-e976-4c6c-9214-e344b16456ec --resource-group tfstate-rg -o table
+
+
+ az group list --output table
