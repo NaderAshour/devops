@@ -1,3 +1,11 @@
+kubectl port-forward svc/result 8081:8081 -n dev
+
+
+
+
+
+
+
 statefulset.apps/postgres-dev-postgresql   1/1     8h
 statefulset.apps/redis-dev-master          1/1     8h
 statefulset.apps/redis-dev-replicas        2/3     8h

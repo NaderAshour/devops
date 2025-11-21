@@ -3,7 +3,6 @@ location            = "westeurope"
 
 resource_group_name = "tfstate-rg"
 
-# Choose one consistent AKS name (I follow your pattern "dev-aks-cluster")
 aks_name            = "dev-aks-cluster"
 dns_prefix          = "devaks"
 
@@ -14,7 +13,7 @@ tags = {
   environment = "dev"
 }
 
-#keyvault_name = "dev-kv"
+
 
 secrets = {
   POSTGRES-USER     = "postgres"

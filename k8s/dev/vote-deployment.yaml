@@ -17,7 +17,7 @@ spec:
       - name: vote
         image: tactfulacr.azurecr.io/devops-vote:latest
         ports:
-        - containerPort: 8080
+        - containerPort: 80
         envFrom:
         - configMapRef:
             name: app-config
@@ -43,5 +43,5 @@ spec:
   selector:
     app: vote
   ports:
-    - port: 8080
+    - port: 80
       targetPort: 8080
