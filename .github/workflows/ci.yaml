@@ -1,0 +1,65 @@
+name: CI - Build & Push ACR Images
+
+on:
+  push:
+    branches:
+      - dev-k8s-cicd
+
+env:
+  ACR_LOGIN_SERVER: ${{ secrets.ACR_LOGIN_SERVER }}
+  ACR_NAME: ${{ secrets.ACR_NAME }}
+  ACR_USERNAME: ${{ secrets.ACR_USER_NAME }}
+  ACR_PASSWORD: ${{ secrets.ACR_PASSWORD }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Azure ACR Login
+        run: |
+          echo "${ACR_PASSWORD}" | docker login ${ACR_LOGIN_SERVER} \
+            --username ${ACR_USERNAME} \
+            --password-stdin
+
+      - name: Set IMAGE TAG (commit SHA)
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    
+      - name: Build vote image
+        run: |
+          docker build -t ${ACR_LOGIN_SERVER}/devops-vote:${IMAGE_TAG} ./vote
+
+      - name: Push vote image
+        run: |
+          docker push ${ACR_LOGIN_SERVER}/devops-vote:${IMAGE_TAG}
+
+     
+      - name: Build result image
+        run: |
+          docker build -t ${ACR_LOGIN_SERVER}/devops-result:${IMAGE_TAG} ./result
+
+      - name: Push result image
+        run: |
+          docker push ${ACR_LOGIN_SERVER}/devops-result:${IMAGE_TAG}
+
+     
+      - name: Build worker image
+        run: |
+          docker build -t ${ACR_LOGIN_SERVER}/devops-worker:${IMAGE_TAG} ./worker
+
+      - name: Push worker image
+        run: |
+          docker push ${ACR_LOGIN_SERVER}/devops-worker:${IMAGE_TAG}
+
+      
+      - name: Build seed-data image
+        run: |
+          docker build -t ${ACR_LOGIN_SERVER}/devops-seed:${IMAGE_TAG} ./seed-data
+
+      - name: Push seed-data image
+        run: |
+          docker push ${ACR_LOGIN_SERVER}/devops-seed:${IMAGE_TAG}
