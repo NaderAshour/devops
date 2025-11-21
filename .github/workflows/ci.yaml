@@ -62,4 +62,4 @@ jobs:
 
       - name: Push seed-data image
         run: |
-          docker push ${ACR_LOGIN_SERVER}/devops-seed:${IMAGE_TAG}
+          docker push ${ACR_LOGIN_SERVER}/devops-seed:${IMAGE_TAG}  

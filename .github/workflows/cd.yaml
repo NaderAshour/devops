@@ -1,0 +1,83 @@
+name: CD - Deploy to AKS
+
+on:
+  workflow_run:
+    workflows: ["CI - Build & Push ACR Images"]  
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_CD }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET_CD }}
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group tactful-rg \
+            --name tactful-aks \
+            --overwrite-existing
+
+      # Ensure dev namespace exists
+      - name: Ensure dev namespace
+        run: |
+          kubectl create namespace dev --dry-run=client -o yaml | kubectl apply -f -
+
+      # Install ingress controller (namespace ingress-nginx)
+      - name: Install/Upgrade Ingress Controller
+        run: |
+          kubectl create namespace ingress-nginx --dry-run=client -o yaml | kubectl apply -f -
+          helm upgrade --install ingress-nginx \
+            ./k8s/helm/ingress-controller \
+            -f k8s/helm/ingress-controller/values-dev.yaml \
+            -n ingress-nginx
+
+      # Deploy vote
+      - name: Deploy vote service
+        run: |
+          kubectl set image deployment/vote \
+            vote=${{ secrets.ACR_LOGIN_SERVER }}/devops-vote:${{ github.sha }} \
+            -n dev
+
+      # Deploy result
+      - name: Deploy result service
+        run: |
+          kubectl set image deployment/result \
+            result=${{ secrets.ACR_LOGIN_SERVER }}/devops-result:${{ github.sha }} \
+            -n dev
+
+      # Deploy worker
+      - name: Deploy worker service
+        run: |
+          kubectl set image deployment/worker \
+            worker=${{ secrets.ACR_LOGIN_SERVER }}/devops-worker:${{ github.sha }} \
+            -n dev
+
+      # Seed job
+      - name: Deploy seed-job
+        run: |
+          kubectl delete job seed-job -n dev --ignore-not-found
+          kubectl apply -f k8s/dev/seed-job.yaml
+          kubectl set image job/seed-job \
+            seed=${{ secrets.ACR_LOGIN_SERVER }}/devops-seed:${{ github.sha }} \
+            -n dev
+
+      # Install/update normal ingress (Nginx rules for vote/result)
+      - name: Install/Upgrade Application Ingress
+        run: |
+          helm upgrade --install dev-ingress \
+            ./k8s/helm/ingress \
+            -f k8s/helm/ingress/values-dev.yaml \
+            -n dev
