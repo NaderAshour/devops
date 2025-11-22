@@ -1,3 +1,203 @@
+Below The Setup Steps u can find the Challenge over view and requirments.
+
+
+Setup:
+ Phase 2 & Phase 3 — AKS, Terraform, Kubernetes & CI/CD (GitHub Actions)
+
+This README explains how to provision the infrastructure (AKS + ACR + Key Vault) using Terraform, deploy all Kubernetes resources (manifests + Helm charts), and configure the CI/CD pipeline using GitHub Actions.
+
+Branch to clone:
+
+https://github.com/NaderAshour/devops/tree/dev-k8s-cicd
+
+📌 1. Tools Required
+
+Install the following:
+
+Tool	Purpose
+Azure CLI	Authentication & resource management
+Terraform ≥ 1.5	Provisioning infrastructure
+kubectl	Working with AKS cluster
+Helm ≥ 3	Deploying charts (Redis, PostgreSQL, Ingress)
+Docker	Build images locally (optional)
+GitHub CLI (optional)	Managing actions & secrets
+📌 2. Clone the Repository
+git clone -b dev-k8s-cicd https://github.com/NaderAshour/devops.git
+cd devops
+
+📌 3. Authenticate to Azure
+3.1 Login
+az login
+
+3.2 Select subscription
+az account set --subscription "<YOUR_SUBSCRIPTION_ID>"
+
+📌 4. Phase 2 — Provision Infrastructure with Terraform
+
+Infrastructure is inside:
+
+terraform/
+│── acr.tf
+│── aks.tf
+│── keyvault.tf
+│── main.tf
+│── outputs.tf
+│── provider.tf
+│── variables.tf
+│── dev.tfvars
+│── prod.tfvars
+
+4.1 Initialize Terraform
+cd terraform
+terraform init
+
+4.2 Validate
+terraform validate
+
+4.3 Apply (example: dev)
+terraform apply -var-file="dev.tfvars"
+
+📌 5. Terraform Outputs (Very Important)
+
+Terraform will output:
+
+Output	Purpose
+acr_name	Used by AKS to pull images & by CI to push images
+acr_server	Example: naderacr.azurecr.io
+aks_name	Used to fetch kubeconfig
+keyvault_name	Needed for CSI driver
+kubeconfig_path	Generated locally
+client_id / principal_id	Needed for RBAC and AKS integration
+📌 6. Authenticate with AKS & ACR
+6.1 Connect kubectl to cluster
+az aks get-credentials --resource-group <RG> --name <AKS_NAME>
+
+6.2 Allow AKS to pull from ACR
+
+Terraform already created roles, but verify:
+
+az aks update -n <AKS_NAME> -g <RG> --attach-acr <ACR_NAME>
+
+📌 7. Phase 2 — Deploy Kubernetes Resources
+
+All manifests & Helm charts are in:
+
+k8s/
+│── bringup.sh
+│── dev/
+│── prod/
+│── helm/
+│   ├── redis/
+│   ├── postgres/
+│   ├── ingress-controller/
+│   └── ingress/
+│── cert-manager/
+
+7.1 Step 1 — Create Namespace
+kubectl apply -f k8s/dev/namespace.yaml
+
+7.2 Step 2 — Deploy Cert-Manager
+kubectl apply -f k8s/cert-manager/
+
+7.3 Step 3 — Install Redis via Helm
+helm install redis k8s/helm/redis -f k8s/helm/redis/values-dev.yaml -n dev
+
+7.4 Step 4 — Install PostgreSQL via Helm
+helm install postgres k8s/helm/postgres -f k8s/helm/postgres/values-dev.yaml -n dev
+
+7.5 Step 5 — Deploy Azure KeyVault CSI Driver Secrets
+kubectl apply -f k8s/dev/secretproviderclass.yaml
+
+7.6 Step 6 — Deploy Application Components
+
+Includes:
+
+✔ vote
+✔ result
+✔ worker
+✔ seed-job
+
+kubectl apply -f k8s/dev/
+
+7.7 Step 7 — Deploy NGINX Ingress Controller
+helm upgrade --install ingress-controller k8s/helm/ingress-controller -f k8s/helm/ingress-controller/values-dev.yaml -n dev
+
+7.8 Step 8 — Deploy Application Ingress
+helm upgrade --install dev-app-ingress k8s/helm/ingress -f k8s/helm/ingress/values-dev.yaml -n dev
+
+📌 8. Phase 3 — CI/CD with GitHub Actions
+
+GitHub workflows:
+
+.github/workflows/
+│── ci.yaml    # Build & push images → ACR
+│── cd.yaml    # Deploy to AKS
+
+📌 9. Required GitHub Secrets
+9.1 Azure AD (Service Principal)
+Secret	Description	Used In
+AZURE_CLIENT_ID	App registration client ID	CI + CD
+AZURE_TENANT_ID	Directory ID	CI + CD
+AZURE_CLIENT_SECRET	Client secret	CI + CD
+AZURE_SUBSCRIPTION_ID	Subscription ID	CI + CD
+9.2 ACR Secrets
+Secret	Description	Used In
+ACR_NAME	ACR name	CI
+ACR_LOGIN_SERVER	e.g. naderacr.azurecr.io	CI
+ACR_USERNAME	Admin username	CI
+ACR_PASSWORD	Admin password	CI
+9.3 CD Secret (Created in Azure)
+Secret	Purpose
+github-cd-secret	Used by CD workflow to authenticate to Azure
+📌 10. CI Pipeline (ci.yaml)
+
+Runs on every push →
+✔ Builds vote / result / worker / seed-job
+✔ Tags with Git SHA
+✔ Pushes to ACR
+
+📌 11. CD Pipeline (cd.yaml)
+
+Triggered after CI succeeds:
+
+✔ Logs into Azure
+✔ Gets kubeconfig
+✔ Upgrades ingress + deployments
+✔ Applies manifest updates
+
+📌 12. Helper Commands
+Check AKS Node Status
+kubectl get nodes -o wide
+
+Restart Deployment
+kubectl rollout restart deployment vote -n dev
+
+Check Pod Logs
+kubectl logs -f <pod> -n dev
+
+Test Ingress
+curl http://<EXTERNAL_IP>/vote
+
+Run Debug Pod
+kubectl run -it --rm testpod --image=busybox -- sh
+
+📌 13. Summary of Process
+
+1️⃣ Clone repository
+2️⃣ Install tools
+3️⃣ Login to Azure
+4️⃣ Apply Terraform to create AKS + ACR + KeyVault
+5️⃣ Get kubeconfig
+6️⃣ Deploy K8s resources
+7️⃣ Install Helm charts (Redis, PostgreSQL, Ingress)
+8️⃣ Configure GitHub Secrets
+9️⃣ CI builds → pushes images
+🔟 CD deploys to AKS automatically
+
+
+
+
+Challenge over view and requirments:
 # Voting Application - DevOps Challenge
 
 ## Project Overview
