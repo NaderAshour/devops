@@ -9,9 +9,9 @@ services:
     healthcheck:
       test: /healthchecks/redis.sh
       interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
+      timeout: 5s
+      retries: 7
+      start_period: 20s
   db:
     image: postgres:15-alpine
     secrets:

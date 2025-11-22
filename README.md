@@ -1,3 +1,102 @@
+
+# u can find the requirements of this task below the setup steps 
+
+# Phase 1 -- Docker Compose Setup
+
+## 📌 Prerequisites
+
+Before running the project, make sure you have the following installed:
+
+-   **Docker**\
+-   **Docker Compose**\
+-   **Git**
+
+## 📥 Clone the Required Branch
+
+``` bash
+git clone -b test https://github.com/NaderAshour/devops.git
+cd devops
+```
+
+## 🚀 Run the Application
+
+To start all services:
+
+``` bash
+docker compose up -d
+```
+
+To run seed-data only when needed:
+
+``` bash
+docker compose --profile seed up -d
+```
+
+------------------------------------------------------------------------
+
+# 🧩 Docker Compose Breakdown
+
+## **1. Redis Service**
+
+-   Uses lightweight Redis:7-alpine
+-   Part of the backend network
+-   Includes a custom healthcheck using `redis-cli`
+
+## **2. Postgres Database Service**
+
+-   Uses Postgres:15-alpine
+-   Credentials passed using Docker secrets:
+    -   `postgres_user`
+    -   `postgres_password`
+    -   `postgres_db`
+-   Initializes database using scripts inside `worker/db-init`
+-   Stores data in a Docker volume `postgres-data`
+
+## **3. Worker Service**
+
+-   Built from `./worker/Dockerfile`
+-   Depends on healthy Redis and Postgres
+-   Runs background tasks for the application
+
+## **4. Vote Service**
+
+-   Built from `./vote/Dockerfile`
+-   Exposes port **8080** → **container port 80**
+-   Connects to both frontend & backend networks
+-   Healthcheck ensures it responds on HTTP
+
+## **5. Result Service**
+
+-   Built from `./result/Dockerfile`
+-   Exposes port **8081** → **container port 81**
+-   Depends on healthy Postgres
+
+## **6. Seed Service**
+
+-   Loads initial data into DB and Redis
+-   Depends on vote, db, and redis
+-   Triggered manually using profiles
+
+------------------------------------------------------------------------
+
+# 🔗 Networks
+
+-   **frontend** → user-facing services (vote, result)\
+-   **backend** → internal services (db, redis, worker, seed)
+
+# 💾 Volumes
+
+-   `postgres-data` → persistent database files
+
+# 🔐 Secrets
+
+Located in `./secrets/`: - postgres_user.txt - postgres_password.txt -
+postgres_db.txt
+
+
+
+
+
 # Voting Application - DevOps Challenge
 
 ## Project Overview
