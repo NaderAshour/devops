@@ -1,12 +1,22 @@
 var express = require('express'),
     async = require('async'),
     { Pool } = require('pg'),
+    path = require('path'),
     cookieParser = require('cookie-parser'),
     app = express(),
     server = require('http').Server(app),
     io = require('socket.io')(server);
 
 var port = process.env.PORT || 4000;
+
+// PostgreSQL configuration from environment variables - NO HARDCODED IPs
+var pgHost = process.env.POSTGRES_HOST || 'localhost';
+var pgPort = process.env.POSTGRES_PORT || '5432';
+var pgUser = process.env.POSTGRES_USER || 'voteapp';
+var pgPassword = process.env.POSTGRES_PASSWORD || 'VoteApp123!';
+var pgDatabase = process.env.POSTGRES_DB || 'votingdb';
+
+console.log('Result service connecting to PostgreSQL at ' + pgHost + ':' + pgPort);
 
 io.on('connection', function (socket) {
 
@@ -18,7 +28,11 @@ io.on('connection', function (socket) {
 });
 
 var pool = new Pool({
-  connectionString: 'postgres://postgres:postgres@db/postgres'
+  host: pgHost,
+  port: parseInt(pgPort),
+  user: pgUser,
+  password: pgPassword,
+  database: pgDatabase
 });
 
 async.retry(

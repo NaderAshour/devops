@@ -6,9 +6,14 @@ import random
 import json
 import logging
 
+# Configuration from environment variables
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
 hostname = socket.gethostname()
+
+# Redis configuration - NO HARDCODED IPs
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
 
 app = Flask(__name__)
 
@@ -16,9 +21,12 @@ gunicorn_error_logger = logging.getLogger('gunicorn.error')
 app.logger.handlers.extend(gunicorn_error_logger.handlers)
 app.logger.setLevel(logging.INFO)
 
+# Log configuration on startup
+app.logger.info(f'Vote service connecting to Redis at {REDIS_HOST}:{REDIS_PORT}')
+
 def get_redis():
     if not hasattr(g, 'redis'):
-        g.redis = Redis(host="redis", db=0, socket_timeout=5)
+        g.redis = Redis(host=REDIS_HOST, port=REDIS_PORT, db=0, socket_timeout=5)
     return g.redis
 
 @app.route("/", methods=['POST','GET'])
@@ -48,4 +56,6 @@ def hello():
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True, threaded=True)
+    # Bind to 0.0.0.0 to accept external connections
+    PORT = int(os.getenv('VOTE_PORT', '8080'))
+    app.run(host='0.0.0.0', port=PORT, debug=True, threaded=True)
