@@ -5,7 +5,7 @@ var express = require('express'),
     cookieParser = require('cookie-parser'),
     app = express(),
     server = require('http').Server(app),
-    io = require('socket.io')(server);
+    io = require('socket.io')(server, { path: '/result/socket.io' });
 
 var port = process.env.PORT || 4000;
 
@@ -79,9 +79,17 @@ function collectVotesFromResult(result) {
 
 app.use(cookieParser());
 app.use(express.urlencoded());
+
+// Serve static files from /result path as well
+app.use('/result', express.static(__dirname + '/views'));
 app.use(express.static(__dirname + '/views'));
 
+// Handle both / and /result paths
 app.get('/', function (req, res) {
+  res.sendFile(path.resolve(__dirname + '/views/index.html'));
+});
+
+app.get('/result', function (req, res) {
   res.sendFile(path.resolve(__dirname + '/views/index.html'));
 });
 
